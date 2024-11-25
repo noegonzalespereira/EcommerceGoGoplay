@@ -1,0 +1,154 @@
+// app.js
+const express = require('express');
+const bodyParser = require('body-parser');
+const { UserController, upload } = require('./controllers/UserController');
+const CategoryController = require('./controllers/CategoryController'); // Importa el controlador de categorías
+const ProductController = require('./controllers/ProductController'); // Asegúrate de que la ruta es correcta
+const UserService = require('./services/UserService'); // Importa el servicio de usuarios
+const CategoryService = require('./services/CategoryService'); // Asegúrate de que la ruta es correcta
+const ProductService = require('./services/ProductService'); // Asegúrate de que la ruta es correcta
+const path = require('path');
+
+const app = express();
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('uploads'));
+
+// Rutas
+app.get('/users', UserController.index);
+app.get('/users/create', UserController.create);
+app.post('/users', upload.single('imagen'), UserController.store);
+app.get('/users/:id', UserController.show);
+app.get('/users/:id/edit', UserController.edit);
+app.post('/users/:id', upload.single('imagen'), UserController.update);
+app.post('/users/:id/delete', UserController.delete);
+// app.js
+app.get('/categories/:id/edit', CategoryController.edit);
+app.post('/categories/:id', CategoryController.update);
+// app.js
+app.get('/products/:id/edit', ProductController.edit);
+app.post('/products/:id', ProductController.update);
+
+// Ruta para mostrar el formulario de login
+app.get('/login', (req, res) => {
+  res.render('login'); // Muestra la vista login.pug
+});
+
+// Ruta para manejar el envío del formulario de login
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Usa el servicio UserService para validar las credenciales
+  UserService.validateUser(username, password, (err, user) => {
+    if (err) throw err;
+
+    if (user) {
+      res.redirect('/users'); // Redirige a /users si las credenciales son correctas
+    } else {
+      res.render('login', { error: 'Credenciales inválidas' }); // Muestra un error si son incorrectas
+    }
+  });
+});
+
+///CATEGORYYYYYYYYYY
+// Middleware para parsear el cuerpo de las solicitudes
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Ruta para obtener todas las categorías
+app.get('/categories', (req, res) => {
+  CategoryService.getAllCategories((err, categories) => {
+    if (err) return res.status(500).send(err.message);
+    res.render('categories/index', { categories });
+  });
+});
+
+app.get('/categories/create', (req, res) => {
+  res.render('categories/create');
+});
+
+// Ruta para crear una nueva categoría
+app.post('/api/categories', (req, res) => {
+  const newCategory = {
+    name: req.body.name,
+    description: req.body.description,
+    image: req.body.image,
+    updatedAt: new Date()
+  };
+
+  CategoryService.createCategory(newCategory, (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    //res.status(201).json({ message: 'Categoría creada con éxito' });
+    res.redirect('/categories');
+  });
+});
+
+app.post('/categories/:id/delete', (req, res) => {
+  const id = req.params.id;
+  CategoryService.deleteCategory(id, (err) => {
+    if (err) return res.status(500).send('Error al eliminar la categoría');
+    res.redirect('/categories'); // Redirige a la lista de categorías después de eliminar
+  });
+});
+
+
+
+
+
+//PRODUCTOOOO
+app.get('/products', (req, res) => {
+  ProductService.getAllProducts((err, products) => {
+    if (err) return res.status(500).send(err.message);
+    res.render('products/index', { products });
+  });
+});
+
+app.get('/products/create', (req, res) => {
+  res.render('products/create');
+});
+// Ruta para crear un nuevo producto
+app.post('/api/products', (req, res) => {
+  const newProduct = {
+    code: req.body.code,
+    name: req.body.name,
+    price: req.body.price,
+    stock: req.body.stock,
+    description: req.body.description,
+    updatedAt: new Date(),
+    thumbnail: req.body.thumbnail,
+    image1: req.body.image1,
+    image2: req.body.image2,
+    categoryId: req.body.categoryId // Asumiendo que relacionas con categoría
+  };
+
+  ProductService.createProduct(newProduct, (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.redirect('/products');
+    //res.status(201).json({ message: 'Producto creado con éxito' });
+  });
+});
+
+// Otras rutas para productos si es necesario
+app.get('/api/products/:id', (req, res) => {
+  const id = req.params.id;
+  ProductService.getProductById(id, (err, product) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(product);
+  });
+});
+
+app.post('/products/:id/delete', (req, res) => {
+  const id = req.params.id;
+  ProductService.deleteProduct(id, (err) => {
+    if (err) return res.status(500).send('Error al eliminar el producto');
+    res.redirect('/products'); // Redirige a la lista de categorías después de eliminar
+  });
+});
+
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});

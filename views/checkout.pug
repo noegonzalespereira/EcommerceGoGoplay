@@ -1,0 +1,188 @@
+//- views/checkout.pug
+extends layout
+
+block content
+    .container
+        h1.mb-4.p-2(style="color: #334488; position: relative; font-weight: bold;") Finalizar Compra
+        .row
+            .col-md-8
+                .card.mb-4
+                    .card-header
+                        h5.mb-0(style="color: #334488; position: relative; font-weight: bold; text-align:center;") Resumen del Pedido
+                    .card-body
+                        if items && items.length > 0
+                            table.table
+                                thead(style="color: #334488; position: relative; ")
+                                    tr
+                                        th Producto
+                                        th Cantidad
+                                        th Precio
+                                        th Total
+                                tbody
+                                    each item in items
+                                        tr
+                                            td
+                                                .d-flex.align-items-center
+                                                    if item.thumbnail
+                                                        img.me-3(src=item.thumbnail alt=item.name style="width: 50px; height: 50px; object-fit: cover;")
+                                                    span= item.name
+                                            td= item.quantity
+                                            td Bs. #{item.price ? item.price.toFixed(2) : '0.00'}
+                                            td Bs. #{item.totalPrice ? item.totalPrice.toFixed(2) : '0.00'}
+
+            .col-md-4
+                form#checkoutForm.card
+                    .card-header
+                        h5.mb-0(style="color: #334488; position: relative; font-weight: bold; text-align:center;") Información de Envío
+                    .card-body(style="color: #334488; position: relative; font-weight: bold;") 
+                        .mb-3
+                            label.form-label(for="name") Nombre completo
+                            input#name.form-control(
+                                type="text" 
+                                name="name"
+                                required
+                                value=user.name || ''
+                                readonly
+                            )
+                        .mb-3
+                            label.form-label(for="email") Email
+                            input#email.form-control(
+                                type="email"
+                                name="email" 
+                                required
+                                value=user.email || ''
+                                readonly
+                            )
+                        .mb-3
+                            label.form-label(for="phone") Teléfono
+                            input#phone.form-control(
+                                type="tel"
+                                name="phone"
+                                required
+                            )
+                        .mb-3
+                            label.form-label(for="address") Dirección
+                            input#address.form-control(
+                                type="text"
+                                name="address"
+                                required
+                            )
+                        .mb-3
+                            label.form-label(for="city") Ciudad
+                            input#city.form-control(
+                                type="text"
+                                name="city"
+                                required
+                            )
+                        
+                    .card-footer
+                        .d-flex.justify-content-between.align-items-center
+                            span.h5.mb-0 Total:
+                            span.h5.mb-0 Bs. #{total.toFixed(2)}
+                        button#processPaymentBtn.btn.btn-primary.w-100.mt-3.m-1.p-3(type="submit") 
+                            i.bi.bi-credit-card.me-2
+                            | Procesar Pago
+                        button#cancelBtn.btn.btn-danger.m-1.w-100(type="button")
+                            i.bi.bi-x-circle.me-2
+                            | Cancelar Compra
+
+block scripts
+    script.
+        // Asegurarse de que el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado');
+            //alert('DOM cargado');
+
+            // Obtener el formulario
+            const form = document.getElementById('checkoutForm');
+            
+            if (form) {
+                //alert('Formulario encontrado');
+                
+                // Manejar el envío del formulario
+                form.addEventListener('submit', async function(e) {
+                    alert('Formulario enviado');
+                    e.preventDefault();
+                    
+                    try {
+                        // Validar el formulario
+                        if (!validateForm()) {
+                            return;
+                        }
+
+                        // Deshabilitar el botón mientras se procesa
+                        const button = document.getElementById('processPaymentBtn');
+                        button.disabled = true;
+                        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+
+                        // Recoger los datos del formulario
+                        const formData = {
+                            shippingInfo: {
+                                name: document.getElementById('name').value,
+                                email: document.getElementById('email').value,
+                                phone: document.getElementById('phone').value,
+                                address: document.getElementById('address').value,
+                                city: document.getElementById('city').value
+                            }
+                        };
+
+                        // Enviar la petición
+                        const response = await fetch('/process-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(formData)
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Error al procesar el pago');
+                        }
+
+                        alert('¡Pago procesado exitosamente! revise su correo');
+                        window.location.href = '/';
+
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                        console.error('Error:', error);
+                    }
+                });
+            } else {
+                alert('Formulario NO encontrado');
+            }
+
+            // Manejar el botón de cancelar
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    alert('Cancelando compra');
+                    if (confirm('¿Está seguro que desea cancelar la compra?')) {
+                        window.location.href = '/catalogo';
+                    }
+                });
+            }
+        });
+
+        // Función de validación
+        function validateForm() {
+            const requiredFields = ['phone', 'address', 'city'];
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (!input || !input.value.trim()) {
+                    input?.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                alert('Por favor, complete todos los campos obligatorios');
+            }
+
+            return isValid;
+        }

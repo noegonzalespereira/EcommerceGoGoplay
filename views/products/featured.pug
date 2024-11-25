@@ -1,0 +1,19 @@
+<!-- views/products/featured.pug -->
+doctype html
+html
+  head
+    title Productos Destacados
+  body
+    h1 Productos Destacados
+    table
+      thead
+        tr
+          th Nombre
+          th Precio
+          th Stock
+      tbody
+        each product in products
+          tr
+            td= product.name
+            td= product.price
+            td= product.stock

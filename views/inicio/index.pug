@@ -1,0 +1,163 @@
+//- views/inicio/index.pug
+extends ../layout
+
+
+block content
+    //- Carrusel principal  
+    
+          
+    
+    .carousel.slide(data-bs-ride="carousel")
+        .carousel-inner
+            .carousel-item.active
+                img.d-block.w-100(src="/images/carrousel/imagen1.png", alt="Imagen 1", style="height: 300px; object-fit: cover;")
+                .carousel-caption.d-flex.justify-content-center.align-items-end(style="bottom: 50px;  width: 100%;")
+                    a.btn.btn-light.text-dark(style="margin-left: 250px; border-radius: 15px;" href="/category/9/products") Ver Más
+            .carousel-item
+                img.d-block.w-100(src="/images/carrousel/imagen2.png", alt="Imagen 2", style="height: 300px; object-fit: cover;")
+                .carousel-caption.d-flex.justify-content-center.align-items-end(style="bottom: 50px;  width: 100%;")
+                    a.btn.btn-light.text-dark(style="margin-left: -370px; border-radius: 15px;" href="/category/9/products") Ver Más
+            .carousel-item
+                img.d-block.w-100(src="/images/carrousel/imagen3.png", alt="Imagen 3", style="height: 300px; object-fit: cover;")
+                .carousel-caption.d-flex.justify-content-center.align-items-end(style="bottom: 50px; width: 100%;")
+                   a.btn.btn-light.text-dark(style="margin-left:150px; transform: translateY(50px); border-radius: 15px;" href="/category/1/products") Ver Más
+        button.carousel-control-prev(type="button", data-bs-target=".carousel", data-bs-slide="prev")
+            span.carousel-control-prev-icon(aria-hidden="true")
+            span.visually-hidden Anterior
+        button.carousel-control-next(type="button", data-bs-target=".carousel", data-bs-slide="next")
+            span.carousel-control-next-icon(aria-hidden="true")
+            span.visually-hidden Siguiente
+
+    p.lead 
+
+        .container-fluid
+            section.mb-5.text-center.d-flex.justify-content-center.flex-wrap
+                    each category in categories
+                        .text-center.mx-7
+                            a(href=`/category/${category.id}/products`)
+                                img.category-image(
+                                src=`/images/logos/${category.id}.png` 
+                                alt=category.name
+                        )
+                            h6.mt-2.text-2px= category.name
+            section.mb-5
+                h2.text-center.mb-4(style="color: #334488; position: relative;") PRODUCTOS DESTACADOS
+                
+                .carousel.slide#productCarousel(data-bs-ride="carousel")
+                    .carousel-inner
+                        // Sección de productos, cada "carousel-item" tendrá 4 productos
+                        each product, index in products
+                            // Agrupar productos en bloques de 4
+                            - var start = Math.floor(index / 4) * 4
+                            - var end = start + 4
+                            if (index % 4 === 0)
+                                .carousel-item(class=(index === 0 ? 'active' : ''))
+                                    .row.g-4
+                                        each product in products.slice(start, end)
+                                            .col-md-3  
+                                                .card.product-card
+                                                    if product.categoryId
+                                                        - var category = categories.find(function(c) { return c.id === product.categoryId })
+                                                        span.badge.bg-primary.category-badge.p-2(style="background-color: #3D707C !important; color: white;")
+                                                            = category ? category.name : 'Sin categoría'
+            
+                                                    if product.thumbnail
+                                                        img.card-img-top.product-image(style="height: 300px; object-fit: cover;" src=product.thumbnail alt=product.name)
+                                                    else
+                                                        img.card-img-top.product-image(style="height: 300px; object-fit: cover;" src='/uploads/default-product.jpg' alt=product.name)
+            
+                                                    .card-body
+                                                        h5.card-title(style="font-weight: bold;")= product.name
+                                                        .d-flex.justify-content-between.align-items-center
+                                                            span.h5.mb-0(style="font-style: italic;") Bs. #{Number(product.price).toFixed(2)}
+            
+                                                    .card-footer.bg-white.border-top-0
+                                                        a.btn.btn-primary.w-100(href=`/product/${product.id}` style="background-color: #334488; border-color: #334488; color: white;") Ver detalles
+            
+                    // Controles de navegación del carrusel
+                    .carousel-control-prev(href="#productCarousel" role="button" data-bs-slide="prev")
+                        span.carousel-control-prev-icon(aria-hidden="true")
+                        span.visually-hidden Anterior
+                    .carousel-control-next(href="#productCarousel" role="button" data-bs-slide="next")
+                        span.carousel-control-next-icon(aria-hidden="true")
+                        span.visually-hidden Siguiente  
+
+            section.mb-5
+              .container-fluid.full-width-container
+                .row.no-gutters
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/1.png" alt="Imagen 1")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/6.png" alt="Imagen 2")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/4.png" alt="Imagen 3")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/7.png" alt="Imagen 4")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/8.png" alt="Imagen 5")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/3.png" alt="Imagen 6")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/5.png" alt="Imagen 7")
+                  .col-md-3.col-sm-6.p-0
+                    img.welcome-img(src="images/8/2.png" alt="Imagen 8")
+            h2.text-center.mb-4(style="color: #334488; position: relative;") COMENTARIOS
+            section.mb-5(style=" ")
+            
+                
+                
+                .container-fluid
+                    .row.align-items-center
+                        // Columna de la imagen
+                        .col-md-6
+                            img.img-fluid.rounded(src="/images/imagen_comentarios.jpg" alt="Descripción de la imagen" style = "width:1000px; ")
+                        // Columna del formulario
+                        .col-md-6(style="color: #334488; position: relative;")
+                            form.comment-form(action="/submit-comment" method="POST")
+                                .mb-3(style="color: #334488; position: relative; font-weight: bold;")
+                                    label(for="username") Nombre:
+                                    input.form-control(type="text" id="username" name="username" placeholder="Escribe tu nombre" required)
+                                .mb-3(style="color: #334488; position: relative; font-weight: bold;")
+                                    label(for="comment") Comentario:
+                                    textarea.form-control(id="comment" name="comment" rows="3" placeholder="Escribe tu comentario aquí..." required)
+                                
+                                a.btn.btn-primary.w-15(type="submit" style="background-color: #334488; border-color: #334488; color: white;" ) Enviar 
+                    
+                    .row.align-items-center.p-3
+                        // Sección de comentarios
+                        .col-md-12
+                            .comments-section
+                                .row
+                                    // Columna 1: Comentario de Juan Pérez
+                                    .col-md-4
+                                        .card(style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); margin-bottom: 20px; border-color: #334488; border: 2px solid;")
+                                            .card-body
+                                                .d-flex.align-items-center
+                                                    img.rounded-circle(src="images/personas/person1.jpg", alt="Persona 1", style="width: 50px; height: 50px; margin-right: 15px;")
+                                                    .comment-info
+                                                        h5(style="font-size: 1.1rem; font-weight: bold;") María Gómez
+                                                        p(style="font-size: 0.9rem; color: #555;") "¡Este sitio es increíble! Me encantó la experiencia de usuario y la interfaz es muy amigable."
+                
+                                    // Columna 2: Comentario de María Gómez
+                                    .col-md-4
+                                        .card(style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); margin-bottom: 20px; border-color: #334488; border: 2px solid;")
+                                            .card-body
+                                                .d-flex.align-items-center
+                                                    img.rounded-circle(src="images/personas/person2.jpg", alt="Persona 2", style="width: 50px; height: 50px; margin-right: 15px;")
+                                                    .comment-info
+                                                        h5(style="font-size: 1.1rem; font-weight: bold;") Juan Pérez
+                                                        p(style="font-size: 0.9rem; color: #555;") "Excelente sitio web. La navegación es fluida y me encantaron los colores adoro los juguetes. ¡Sigan así!"
+                
+                                    // Columna 3: Comentario de Carlos Fernández
+                                    .col-md-4
+                                        .card(style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); margin-bottom: 20px; border-color: #334488; border: 2px solid;")
+                                            .card-body
+                                                .d-flex.align-items-center
+                                                    img.rounded-circle(src="images/personas/person3.jpg", alt="Persona 3", style="width: 50px; height: 50px; margin-right: 15px;")
+                                                    .comment-info
+                                                        h5(style="font-size: 1.1rem; font-weight: bold;") Camila Herrera
+                                                        p(style="font-size: 0.9rem; color: #555;") "Gran diseño. Me siento muy cómodo navegando por el sitio. ¡Lo recomiendo totalmente!"
+                                       
+                    
+
+        

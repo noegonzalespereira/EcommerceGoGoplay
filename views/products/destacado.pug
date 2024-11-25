@@ -1,0 +1,83 @@
+extends ../layout
+
+block content
+    .container
+        h1.mb-0.pt-4(style="color: #334488; position: relative; font-weight: bold; text-align:center;") PRODUCTOS DESTACADOS
+        p.text-center.text-muted Stock limitado - Menos de 40 unidades disponibles
+        hr(style="border: 1px solid #334488;")
+        
+        // Lista de productos destacados
+        .row
+            if products && products.length > 0
+                .row.row-cols-1.row-cols-md-3.g-4
+                    each product in products
+                        .col
+                            .card.h-120
+                                if product.thumbnail
+                                    img.card-img-top(
+                                        src=product.thumbnail
+                                        alt=product.name
+                                        style="height: 200px; object-fit: cover;"
+                                    )
+                                else
+                                    img.card-img-top(
+                                        src='/uploads/default-product.jpg'
+                                        alt=product.name
+                                        style="height: 200px; object-fit: cover;"
+                                    )
+                                .card-body
+                                    h5.card-title= product.name
+                                    p.card-text.text-truncate= product.description
+                                    p.h5.mb-2 Bs. #{Number(product.price).toFixed(2)}
+                                    .d-flex.align-items-center.justify-content-between.mb-2
+                                        span.badge.bg-warning.text-dark ¡Solo #{product.stock} unidades!
+                                    if product.stock > 0
+                                        form.add-to-cart-form(onsubmit="return addToCart(event, " + product.id + ")")
+                                            input(type="hidden" name="productId" value=product.id)
+                                            input(type="hidden" name="quantity" value="1")
+                                            button.btn.btn-primary.w-100.mb-2(type="submit" style="background-color: #334488; border-color: #334488; color: white;")
+                                                i.bi.bi-cart-plus.me-2
+                                                | Agregar al Carrito
+                                    
+                                    a.btn.btn-outline-secondary.w-100.mt-2(href=`/product/${product.id}` style="background-color: #5784c6; border-color: #334488; color: white;")
+                                        i.bi.bi-eye.me-2
+                                        | Ver Detalles
+            else
+                .alert.alert-info.text-center.mt-4
+                    h4.alert-heading No hay productos destacados
+                    p Actualmente no hay productos con stock limitado
+                    a.btn.btn-primary.mt-3(href='/catalogo') Ver todo el catálogo
+
+block scripts
+    script.
+        function addToCart(event, productId) {
+            event.preventDefault();
+            
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar alerta de éxito
+                    alert('¡Producto agregado al carrito!');
+                    // Recargar la página para actualizar el contador del carrito
+                    location.reload();
+                } else {
+                    alert(data.message || 'Error al agregar al carrito');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar al carrito');
+            });
+            
+            return false;
+        }

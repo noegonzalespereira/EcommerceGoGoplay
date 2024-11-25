@@ -1,0 +1,190 @@
+extends ../layout
+
+block content
+    .container
+        h1.mb-4.p-3(style="color: #334488; position: relative; font-weight: bold;") TU CARRITO DE COMPRAS 
+        
+        if items && items.length > 0
+            .card.mb-4
+                .card-body
+                    table.table
+                        thead(style="color: #334488; position: relative;text-align:center ")
+                            tr
+                                th Producto
+                                th Precio por Unidad
+                                th Cantidad
+                                th Subtotal
+                                th Acciones
+                       
+                        tbody
+                            each item in items
+                                tr(data-item-id=item.id, style="border-bottom: 1px solid #ddd;")
+                                    td(style="position: relative; text-align: left; padding: 10px; font-size: 15px; font-weight: bold; ")
+                                        if item.thumbnail
+                                            img.me-3(
+                                                src=item.thumbnail,
+                                                alt=item.name,
+                                                style="width: 40px; height: 40px; border-radius: 5px; margin-right: 10px;"
+                                            )
+                                        span= item.name
+                                    td(style="text-align: center; padding: 10px; font-size: 14px; font-weight: bold;") 
+                                        | Bs. #{Number(item.price).toFixed(2)}
+                                    td(style="text-align: center; padding: 10px;")
+                                        .input-group.w-auto.align-items-center(style="background-color: #f5f5f5; border-radius: 10px; padding: 5px; display: inline-flex;")
+                                            button.btn.btn-outline-secondary.btn-sm.decrement-quantity(
+
+                                                type="button",
+                                                style="color: white; background-color: #334488; border-color: #334488; font-weight: bold; border-radius: 5px;text-align: center;"
+                                                onmouseover="this.style.backgroundColor='#5566AA';"
+                                                onmouseout="this.style.backgroundColor='#334488';"
+                                                
+                                            ) -  
+                                            input.form-control.form-control-sm.quantity-input.text-center(
+                                                type="number",
+                                                value=item.quantity,
+                                                min="1",
+                                                style="width: 40px ; background-color: white; color: #334488; font-weight: bold; text-align: center; border-radius: 5px; "
+                                            )
+                                            button.btn.btn-outline-secondary.btn-sm.increment-quantity(
+                                                type="button",
+                                                style="color: white; background-color: #334488; border-color: #334488; font-weight: bold; border-radius: 5px;"
+                                                onmouseover="this.style.backgroundColor='#5566AA';"
+                                                onmouseout="this.style.backgroundColor='#334488';"
+                                            ) +
+                                    td(style="text-align: center; padding: 10px; font-size: 14px; font-weight: bold;") 
+                                        | Bs. #{Number(item.totalPrice).toFixed(2)}
+                                    td(style="text-align: center; padding: 10px;")
+                                        button.btn.btn-danger.btn-sm.remove-item(type="button", style="border-radius: 5px; padding: 5px 10px;")
+                                            i.bi.bi-trash(style="font-size: 18px;")
+                                                    
+            
+            .card.mb-4
+                .card-body
+                    .row
+                        .col-md-6
+                            button.btn.btn-danger.clear-cart(type="button") Vaciar Carrito
+                        .col-md-6.text-end
+                            h5.mb-0(style=" font-weight: bold;") Total: Bs. #{Number(total || 0).toFixed(2)}
+            
+            .d-grid.gap-2
+                button.btn.btn-primary.btn-lg.checkout-button(type="button" style="background-color: #334488; border-color: #334488; color: white;") PROCEDER CON EL PAGO
+        else
+            .alert.alert-info.text-center
+                h4.alert-heading Tu carrito está vacío
+                p.mb-0 
+                    | No hay productos en tu carrito. 
+                    a(href="/catalogo") Ir al catálogo
+
+block scripts
+    script.
+        // Funciones para el carrito
+        document.querySelectorAll('.increment-quantity').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('.quantity-input');
+                updateQuantity(input.parentElement.parentElement.parentElement.dataset.itemId, parseInt(input.value) + 1);
+            });
+        });
+
+        document.querySelectorAll('.decrement-quantity').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('.quantity-input');
+                if (parseInt(input.value) > 1) {
+                    updateQuantity(input.parentElement.parentElement.parentElement.dataset.itemId, parseInt(input.value) - 1);
+                }
+            });
+        });
+
+        document.querySelectorAll('.remove-item').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.closest('tr').dataset.itemId;
+                if (confirm('¿Estás seguro de eliminar este producto del carrito?')) {
+                    removeItem(itemId);
+                }
+            });
+        });
+
+        document.querySelector('.clear-cart')?.addEventListener('click', function() {
+            if (confirm('¿Estás seguro de vaciar el carrito?')) {
+                clearCart();
+            }
+        });
+
+        document.querySelector('.checkout-button')?.addEventListener('click', handleCheckout);
+        async function handleCheckout() {
+            try {
+                const response = await fetch('/api/check-auth', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.setItem('returnTo', '/cart');
+                        alert('Por favor, inicia sesión para continuar con la compra');
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error(data.message || 'Error al verificar autenticación');
+                }
+
+                // Si está autenticado, redirigir al checkout
+                window.location.href = '/checkout';
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+
+        function updateQuantity(itemId, quantity) {
+            fetch('/cart/update-quantity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId, quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert(data.message || 'Error al actualizar cantidad');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar cantidad');
+            });
+        }
+
+        function removeItem(itemId) {
+            fetch(`/cart/remove/${itemId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert(data.message || 'Error al eliminar producto');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar producto');
+            });
+        }
+
+        function clearCart() {
+            fetch('/cart/clear', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert(data.message || 'Error al vaciar carrito');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al vaciar carrito');
+            });
+        }

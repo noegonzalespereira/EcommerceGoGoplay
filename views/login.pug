@@ -1,0 +1,76 @@
+//- views/login.pug
+extends layout
+
+block content
+    .container
+        .row.justify-content-center
+            .col-md-6.col-lg-4
+                .card.shadow.mt-5
+                    .card-body
+                        h2.text-center.mb-4 Iniciar Sesión
+                        if error
+                            .alert.alert-danger= error
+                        form#loginForm
+                            .mb-3
+                                label.form-label(for="username") Usuario
+                                input#username.form-control(type="text" name="username" required)
+                            .mb-3
+                                label.form-label(for="password") Contraseña
+                                input#password.form-control(type="password" name="password" required)
+                            .d-grid.gap-2
+                                button.btn.btn-primary(type="submit") Iniciar Sesión
+
+                        //- Agregar separador y enlace de registro
+                        .text-center.mt-4
+                            hr.my-4
+                            p.text-muted ¿No tienes una cuenta?
+                            a.btn.btn-outline-primary(href="/users/create") 
+                                i.bi.bi-person-plus.me-2
+                                | Registrarse
+
+block scripts
+    script.
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Error al iniciar sesión');
+                }
+
+                // Si el login fue exitoso
+                const returnTo = localStorage.getItem('returnTo');
+                
+                if (returnTo === '/cart') {
+                    window.location.href = '/checkout';
+                } else {
+                    window.location.href = returnTo || '/';
+                }
+                
+                // Limpiar returnTo del localStorage
+                localStorage.removeItem('returnTo');
+
+            } catch (error) {
+                console.error('Error:', error);
+                // Mostrar mensaje de error más amigable
+                let errorMessage = error.message;
+                if (errorMessage.includes('Credenciales inválidas')) {
+                    errorMessage = 'Usuario o contraseña incorrectos. Si no tienes una cuenta, puedes registrarte.';
+                }
+                
+                alert(errorMessage);
+            }
+        });
